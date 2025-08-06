@@ -1,0 +1,78 @@
+1. Le Problème : L'Assignation Simple
+
+
+   * Ce que c'est : C'est le modèle que vous utilisez actuellement. Chaque tâche (un Cours) est indépendante et on
+     lui assigne une ressource (un Creneau).
+   * Idéal pour : Des problèmes simples où l'ordre n'a pas d'importance. Par exemple, assigner des employés à des
+     postes de travail pour une seule journée.
+   * La limite (votre problème) : Ce modèle ne comprend pas la notion de séquence ou de continuité. Il ne peut pas
+     facilement gérer des contraintes comme "ces deux cours doivent se suivre" ou "minimiser le temps mort entre
+     les cours".
+
+  ---
+
+  2. La Solution : Le Modèle de Planification Chaînée
+
+  L'idée est de transformer le problème. Au lieu d'assigner un créneau à un cours, on va ordonner les cours les uns
+   par rapport aux autres.
+
+  Notion Clé n°1 : L'Ancre (Anchor)
+
+
+   * Ce que c'est : C'est le début de la chaîne. C'est un objet qui n'est pas un cours lui-même, mais qui sert de
+     point de départ.
+   * Exemple concret : Un ProfPlan ou une ClassePlan. Chaque professeur aura sa propre chaîne de cours qui
+     commencera par lui.
+   * Rôle : Le premier vrai cours de la journée pour un professeur sera "accroché" à cette ancre.
+
+  Notion Clé n°2 : L'Entité Chaînée (Chained Entity)
+
+
+   * Ce que c'est : C'est votre objet Cours. C'est un maillon de la chaîne.
+   * La différence : Au lieu d'avoir une variable qui stocke son Creneau, il aura une variable qui stocke le 
+     maillon précédent de la chaîne. On l'appelle souvent previousCoursOrAnchor.
+
+
+  Notion Clé n°3 : La Variable de Planification Chaînée (@PlanningVariable)
+
+
+   * Ce que c'est : C'est la variable previousCoursOrAnchor dans votre classe Cours. C'est cette variable que le
+     solveur va modifier.
+   * Son rôle : Le solveur ne va plus choisir un Creneau pour un Cours. Il va choisir un autre `Cours` (ou une 
+     `Ancre`) et placer le cours actuel juste après. Il construit la chaîne maillon par maillon.
+   * Comment ça marche : Pour que le solveur sache quels sont les choix possibles pour previousCoursOrAnchor, on
+     lui fournit une liste de tous les cours et de toutes les ancres possibles.
+
+  Notion Clé n°4 : La Variable Fantôme (@ShadowVariable)
+
+
+   * Ce que c'est : C'est une variable dont la valeur n'est pas décidée par le solveur, mais qui est
+     automatiquement déduite d'autres variables.
+   * Exemple concret : Votre Creneau ! Le créneau d'un cours n'est plus une décision, c'est une conséquence.
+   * Comment ça marche : Si le Cours A est à 8h et dure 1 heure, et que le solveur décide de chaîner le Cours B
+     juste après le Cours A, alors la variable Creneau du Cours B sera automatiquement mise à jour à 9h. Vous
+     écrivez la logique de cette mise à jour une seule fois.
+
+  ---
+
+  Résumé des Avantages de ce Modèle
+
+
+   1. Contraintes de Séquence Faciles :
+       * "Ces deux cours doivent se suivre" -> Facile, il suffit de s'assurer qu'ils sont l'un après l'autre dans la
+         chaîne.
+       * "Minimiser les trous dans l'emploi du temps" -> Facile, il suffit de pénaliser les "sauts" dans le temps
+         entre deux maillons de la chaîne.
+
+   2. Création de Blocs : Un cours de 2h de Maths est simplement modélisé comme deux cours d'1h qui sont contraints
+      de se suivre dans la chaîne. Le solveur les déplacera toujours ensemble, comme un seul bloc.
+
+
+   3. Performance : OptaPlanner possède des algorithmes de recherche (des "mouvements") spécifiquement optimisés
+      pour manipuler ces chaînes efficacement (par exemple, prendre un sous-ensemble de la chaîne et le déplacer
+      ailleurs).
+
+
+  Ce modèle est un standard pour tous les problèmes d'ordonnancement et de routage (Vehicle Routing Problem, Task
+  Scheduling, etc.), et votre cas d'emploi du temps en est un exemple parfait.
+
