@@ -38,7 +38,7 @@ public class EdtConstraintProvider implements ConstraintProvider {
         {
                 return constraintFactory
                         .forEach(Cours.class)
-                        .ifExists(ClasseProfPlan.class,
+                        .ifNotExists(ClasseProfPlan.class,
                                 Joiners.equal(Cours::getProf, ClasseProfPlan::getProf),
                                 Joiners.equal(Cours::getClasse, ClasseProfPlan::getClasse)
                         ).penalize("Prof ne tient pas cette classe", ONE_HARD);
@@ -48,7 +48,7 @@ public class EdtConstraintProvider implements ConstraintProvider {
         {
                 return constraintFactory
                         .forEach(Cours.class)
-                        .ifExists(MatiereProfPlan.class, 
+                        .ifNotExists(MatiereProfPlan.class, 
                                 Joiners.equal(Cours::getProf, MatiereProfPlan::getProf),
                                 Joiners.equal(Cours::getMatiere, MatiereProfPlan::getMatiere)
                         ).penalize("Prof n'enseigne pas cette matière", ONE_HARD);
