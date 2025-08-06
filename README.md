@@ -6,7 +6,7 @@ Structure du projet
         -solver: dossier sous jacent contenant les classes de OptaPlanner
             -constraints: ici on trouvera la classe pour définir les contraintes
             -entities: ici on trouvera les entités de planification et la solution
-    App.java: classe main pour run le projet sur une demo (pas encore de test dans la base de donnée, ces données ont été générées par chatgpt et n'ont pas encore été vérifiée)
+    App.java: classe main pour run le projet sur une demo 
 
 Pour compiler et lancer le projet: 
     mvn compile exec:java -Dexec.mainClass="com.edt.App"
