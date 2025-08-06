@@ -20,8 +20,8 @@ Algorithme de planification:
 Tech: Java, OptaPlanner
 
 Modification à apporter à la base:
-    -une table pour les matieres de base d'une spé.
-    -une table pour la disponibilité du prof.
-    -une table pour les matières du prof.
-    -une table pour les classes tenues du prof.
-    -ajouter champ heure (TIME) dans la table Heure.
+    -une table pour les matieres de base d'une spé. (ok)
+    -une table pour la disponibilité du prof. (ok)
+    -une table pour les matières du prof. (ok)
+    -une table pour les classes tenues du prof. (ok)
+    -ajouter champ heure (TIME) dans la table Heure. (ok)
