@@ -1,0 +1,17 @@
+/home/faniry/Documents/work/IT/gestion_ecole/edt_planificateur/edt_planificateur/src/main/java/com/edt/planning/entities/MatiereProfPlan.java
+/home/faniry/Documents/work/IT/gestion_ecole/edt_planificateur/edt_planificateur/src/main/java/com/edt/planning/solver/entities/EdtPlanificateur.java
+/home/faniry/Documents/work/IT/gestion_ecole/edt_planificateur/edt_planificateur/src/main/java/com/edt/planning/entities/Creneau.java
+/home/faniry/Documents/work/IT/gestion_ecole/edt_planificateur/edt_planificateur/src/main/java/com/edt/planning/entities/JourPlan.java
+/home/faniry/Documents/work/IT/gestion_ecole/edt_planificateur/edt_planificateur/src/main/java/com/edt/planning/solver/constraints/EdtConstraintProvider.java
+/home/faniry/Documents/work/IT/gestion_ecole/edt_planificateur/edt_planificateur/src/main/java/com/edt/planning/entities/ClassePlan.java
+/home/faniry/Documents/work/IT/gestion_ecole/edt_planificateur/edt_planificateur/src/main/java/com/edt/planning/entities/MatiereBaseSpePlan.java
+/home/faniry/Documents/work/IT/gestion_ecole/edt_planificateur/edt_planificateur/src/main/java/com/edt/planning/entities/LevelPlan.java
+/home/faniry/Documents/work/IT/gestion_ecole/edt_planificateur/edt_planificateur/src/main/java/com/edt/planning/entities/ClasseProfPlan.java
+/home/faniry/Documents/work/IT/gestion_ecole/edt_planificateur/edt_planificateur/src/main/java/com/edt/planning/entities/VolumeHorairePlan.java
+/home/faniry/Documents/work/IT/gestion_ecole/edt_planificateur/edt_planificateur/src/main/java/com/edt/planning/entities/SpePlan.java
+/home/faniry/Documents/work/IT/gestion_ecole/edt_planificateur/edt_planificateur/src/main/java/com/edt/planning/entities/ProfPlan.java
+/home/faniry/Documents/work/IT/gestion_ecole/edt_planificateur/edt_planificateur/src/main/java/com/edt/planning/entities/DisponibiliteProf.java
+/home/faniry/Documents/work/IT/gestion_ecole/edt_planificateur/edt_planificateur/src/main/java/com/edt/planning/solver/entities/Cours.java
+/home/faniry/Documents/work/IT/gestion_ecole/edt_planificateur/edt_planificateur/src/main/java/com/edt/planning/entities/MatierePlan.java
+/home/faniry/Documents/work/IT/gestion_ecole/edt_planificateur/edt_planificateur/src/main/java/com/edt/planning/entities/HeurePlan.java
+/home/faniry/Documents/work/IT/gestion_ecole/edt_planificateur/edt_planificateur/src/main/java/com/edt/App.java

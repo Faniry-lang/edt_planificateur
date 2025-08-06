@@ -1,0 +1,27 @@
+Module emploi du temps
+Algorithme de planification:
+    Données:
+        - Profs
+        - Classes
+        - Matières
+        - Spécialisations
+        - Disponibilité profs
+        - Matières de base par spécialisation 
+        - Volume horaire par spécialisation par matière
+        Objectif:
+            On veut pouvoir créer la planification d'un emploi du temps optimal pour les classes d'une école selon la disponibilité des profs et les contraintes suivantes:
+                - Pas de matières de base qui se suivent pour une classe.
+                - Pas de classe en parallèle pour la matière info.
+                - Pas de cours mercredi après midi.
+                - Deux classes en parallèles autorisées pour la matière EPS.
+                - Pas de chevauchement d'emploi du temps pour les profs.
+                - Pas d'excès dans le volume horaire.
+
+Tech: Java, OptaPlanner
+
+Modification à apporter à la base:
+    -une table pour les matieres de base d'une spé.
+    -une table pour la disponibilité du prof.
+    -une table pour les matières du prof.
+    -une table pour les classes tenues du prof.
+    -ajouter champ heure (TIME) dans la table Heure.
