@@ -121,40 +121,40 @@ public class App {
         List<DisponibiliteProf> disponibiliteProfs = new ArrayList<>();
 
         // Prof A est dispo seulement le lundi
-        for (HeurePlan h : heures) {
-            disponibiliteProfs.add(new DisponibiliteProf(new Creneau(lundi, h), profA));
-        }
-
-        // Prof B est dispo seulement le lundi
-        for (HeurePlan h : heures) {
-            disponibiliteProfs.add(new DisponibiliteProf(new Creneau(lundi, h), profB));
-        }
+//        for (HeurePlan h : heures) {
+//            disponibiliteProfs.add(new DisponibiliteProf(new Creneau(lundi, h), profA));
+//        }
+//
+//        // Prof B est dispo seulement le lundi
+//        for (HeurePlan h : heures) {
+//            disponibiliteProfs.add(new DisponibiliteProf(new Creneau(lundi, h), profB));
+//        }
 
         // Prof A est dispo tout le temps sauf le mercredi
-//        for (Creneau c : creneaux) {
-//            if (!c.getJour().equals(mercredi)) {
-//                disponibiliteProfs.add(new DisponibiliteProf(c, profA));
-//            }
-//        }
-//        // Prof B est dispo Lundi/Mardi matin et Jeudi/Vendredi aprem
-//        for (HeurePlan h : Arrays.asList(h8, h9, h10, h11)) {
-//            disponibiliteProfs.add(new DisponibiliteProf(new Creneau(lundi, h), profB));
-//            disponibiliteProfs.add(new DisponibiliteProf(new Creneau(mardi, h), profB));
-//        }
-//        for (HeurePlan h : Arrays.asList(h13, h14, h15, h16)) {
-//            disponibiliteProfs.add(new DisponibiliteProf(new Creneau(jeudi, h), profB));
-//            disponibiliteProfs.add(new DisponibiliteProf(new Creneau(vendredi, h), profB));
-//        }
-//        // Prof C (Info) n'est dispo que le matin
-//         for (JourPlan j : jours) {
-//            for (HeurePlan h : Arrays.asList(h8, h9, h10, h11)) {
-//                 disponibiliteProfs.add(new DisponibiliteProf(new Creneau(j, h), profC));
-//            }
-//        }
-//        // Prof D (EPS) est toujours dispo
-//        for (Creneau c : creneaux) {
-//            disponibiliteProfs.add(new DisponibiliteProf(c, profD));
-//        }
+        for (Creneau c : creneaux) {
+            if (!c.getJour().equals(mercredi)) {
+                disponibiliteProfs.add(new DisponibiliteProf(c, profA));
+            }
+        }
+        // Prof B est dispo Lundi/Mardi matin et Jeudi/Vendredi aprem
+        for (HeurePlan h : Arrays.asList(h8, h9, h10, h11)) {
+            disponibiliteProfs.add(new DisponibiliteProf(new Creneau(lundi, h), profB));
+            disponibiliteProfs.add(new DisponibiliteProf(new Creneau(mardi, h), profB));
+        }
+        for (HeurePlan h : Arrays.asList(h13, h14, h15, h16)) {
+            disponibiliteProfs.add(new DisponibiliteProf(new Creneau(jeudi, h), profB));
+            disponibiliteProfs.add(new DisponibiliteProf(new Creneau(vendredi, h), profB));
+        }
+        // Prof C (Info) n'est dispo que le matin
+         for (JourPlan j : jours) {
+            for (HeurePlan h : Arrays.asList(h8, h9, h10, h11)) {
+                 disponibiliteProfs.add(new DisponibiliteProf(new Creneau(j, h), profC));
+            }
+        }
+        // Prof D (EPS) est toujours dispo
+        for (Creneau c : creneaux) {
+            disponibiliteProfs.add(new DisponibiliteProf(c, profD));
+        }
 
 
         // 12. Volume Horaire par matière/classe (simplifié)
