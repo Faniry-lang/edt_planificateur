@@ -11,10 +11,7 @@ import org.optaplanner.core.config.solver.SolverConfig;
 import org.optaplanner.core.config.solver.termination.TerminationConfig;
 
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class App {
@@ -33,6 +30,7 @@ public class App {
 
         PdfExporter.export(solution, "edt.pdf");
         printSchedule(solution);
+        printScheduleParProf(solution);
     }
 
     private static EdtPlanificateur createDemoData() {
@@ -272,4 +270,42 @@ public class App {
 
         System.out.println("========================================================");
     }
+
+    private static void printScheduleParProf(EdtPlanificateur solution) {
+        System.out.println("========================= EMPLOI DU TEMPS PAR PROF ========================");
+
+        List<ProfPlan> profs = solution.getProfs(); // ProfPlan au lieu de Prof
+        List<Cours> coursList = solution.getCoursList();
+
+        Map<ProfPlan, List<Cours>> coursParProf = coursList.stream()
+                .filter(c -> c.getCreneau() != null && c.getProf() != null)
+                .collect(Collectors.groupingBy(Cours::getProf)); // getProf doit retourner ProfPlan
+
+        for (ProfPlan prof : profs) {
+            System.out.printf("\n--- Emploi du temps pour Professeur: %s ---\n", prof.getNomProf());
+
+            List<Cours> coursDuProf = coursParProf.getOrDefault(prof, new ArrayList<>());
+
+            for (JourPlan jour : solution.getJours()) {
+                List<Cours> coursJour = coursDuProf.stream()
+                        .filter(c -> c.getCreneau().getJour().equals(jour))
+                        .sorted(Comparator.comparing(c -> c.getCreneau().getHeure().getHeure()))
+                        .collect(Collectors.toList());
+
+                if (!coursJour.isEmpty()) {
+                    System.out.println("  * " + jour.getNomJour() + ":");
+                    for (Cours c : coursJour) {
+                        System.out.printf("    - %s: %s en classe %s\n",
+                                c.getCreneau().getHeure().getNomHeure(),
+                                c.getMatiere().getNomMatiere(),
+                                c.getClasse().getNumeroClasse());
+                    }
+                }
+            }
+        }
+
+        System.out.println("\n========================================================");
+    }
+
+
 }
