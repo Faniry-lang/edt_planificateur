@@ -1,6 +1,7 @@
 package com.edt.planning.solver.constraints;
 
 import com.edt.planning.entities.ClasseProfPlan;
+import com.edt.planning.entities.Creneau;
 import com.edt.planning.entities.DisponibiliteProf;
 import com.edt.planning.entities.MatiereBaseSpePlan;
 import com.edt.planning.entities.MatiereProfPlan;
@@ -16,6 +17,7 @@ import org.optaplanner.core.api.score.stream.Joiners;
 import java.time.LocalTime;
 
 import static org.optaplanner.core.api.score.buildin.hardsoft.HardSoftScore.ONE_HARD;
+import static org.optaplanner.core.api.score.buildin.hardsoft.HardSoftScore.ONE_SOFT;;
 
 public class EdtConstraintProvider implements ConstraintProvider {
 
@@ -26,12 +28,60 @@ public class EdtConstraintProvider implements ConstraintProvider {
                         profEnseignantMatiere(constraintFactory),
                         chevauchementEdtProf(constraintFactory),
                         chevauchementEdtClasse(constraintFactory),
-                        pasDeCoursMercrediAprem(constraintFactory),
-                        // pasDeClasseEnParallèlePourLaMatièreInfo(constraintFactory),
                         disponibiliteProf(constraintFactory),
                         matieresDeBaseConsecutives(constraintFactory),
-                        depassementDeLimiteDeClasseParalleleParMatiere(constraintFactory)
+                        depassementDeLimiteDeClasseParalleleParMatiere(constraintFactory),
+                        creneauDepasseHeureDeSortie(constraintFactory),
+                        //pasDeTrouDansEmploiDuTemps(constraintFactory),
                 };
+        }
+
+        /* 
+        private Constraint pasDeTrouDansEmploiDuTemps(ConstraintFactory constraintFactory) {
+                return constraintFactory
+                        .forEach(Cours.class)
+                        .groupBy(cours -> cours.getClasse(), cours -> cours.getCreneau().getJour(), ConstraintCollectors.toList())
+                        .filter((classe, jour, coursList) -> {
+                                if (coursList.size() < 2) {
+                                        return false; 
+                                }
+                                coursList.sort((c1, c2) -> c1.getCreneau().getHeure().getHeure().compareTo(c2.getCreneau().getHeure().getHeure()));
+                                for (int i = 0; i < coursList.size() - 1; i++) {
+                                        Cours currentCours = coursList.get(i);
+                                        Cours nextCours = coursList.get(i + 1);
+                                        if (currentCours.getFinHeure() != null && nextCours.getCreneau() != null && nextCours.getCreneau().getHeure() != null && nextCours.getCreneau().getHeure().getHeure() != null) {
+                                                if (currentCours.getFinHeure().isBefore(nextCours.getCreneau().getHeure().getHeure())) {
+                                                        return true; 
+                                                }
+                                        }
+                                }
+                                return false;
+                        })
+                        .penalize("Trou dans l'emploi du temps", ONE_SOFT);
+        }*/
+
+        private Constraint creneauDepasseHeureDeSortie(ConstraintFactory constraintFactory) {
+                LocalTime heureDeSortieMatin = LocalTime.of(11, 0); 
+                LocalTime heureDeSortieAprem = LocalTime.of(16, 0); 
+                return constraintFactory
+                        .forEach(Cours.class)
+                        .filter(c -> {
+                                if(
+                                        (
+                                                c.getCreneau().getHeure().getHeure().isBefore(heureDeSortieMatin) && 
+                                                c.getFinHeure().isAfter(heureDeSortieMatin)
+                                        ) || 
+                                        (
+                                                c.getCreneau().getHeure().getHeure().isBefore(heureDeSortieAprem) && 
+                                                c.getFinHeure().isAfter(heureDeSortieAprem)
+      
+                                        )
+                                ) {
+                                        return true;
+                                }
+                                return false;
+                        })
+                        .penalize("Le cours dépasse l'heure de sortie", ONE_HARD);
         }
 
         private Constraint profTientCetteClasse(ConstraintFactory constraintFactory)
@@ -58,7 +108,8 @@ public class EdtConstraintProvider implements ConstraintProvider {
                 return constraintFactory
                         .forEachUniquePair(Cours.class,
                                 Joiners.equal(Cours::getProf),
-                                Joiners.equal(Cours::getCreneau))
+                                Joiners.equal(cours -> cours.getCreneau().getJour()))
+                        .filter((cours1, cours2) -> doCoursesOverlap(cours1, cours2))
                         .penalize("Conflit d'horaire pour un professeur", ONE_HARD);
         }
 
@@ -66,38 +117,42 @@ public class EdtConstraintProvider implements ConstraintProvider {
                 return constraintFactory
                         .forEachUniquePair(Cours.class,
                                 Joiners.equal(Cours::getClasse),
-                                Joiners.equal(Cours::getCreneau))
+                                Joiners.equal(cours -> cours.getCreneau().getJour()))
+                        .filter((cours1, cours2) -> doCoursesOverlap(cours1, cours2))
                         .penalize("Conflit d'horaire pour une classe", ONE_HARD);
         }
 
-        private Constraint pasDeCoursMercrediAprem(ConstraintFactory constraintFactory) {
-                return constraintFactory
-                        .forEach(Cours.class)
-                        .filter(cours ->
-                                "Mercredi".equalsIgnoreCase(cours.getCreneau().getJour().getNomJour()) &&
-                                cours.getCreneau().getHeure().getHeure().getHour() >= 12)
-                        .penalize("Cours le mercredi après-midi", ONE_HARD);
-        }
+        private boolean doCoursesOverlap(Cours cours1, Cours cours2) {
+                if (!cours1.getCreneau().getJour().equals(cours2.getCreneau().getJour())) {
+                        return false;
+                }
 
-        /* 
-        private Constraint pasDeClasseEnParallèlePourLaMatièreInfo(ConstraintFactory constraintFactory) {
-                return constraintFactory
-                        .forEachUniquePair(Cours.class,
-                                Joiners.equal(Cours::getMatiere),
-                                Joiners.equal(Cours::getCreneau))
-                        .filter((c1, c2) ->
-                                "Informatique".equalsIgnoreCase(c1.getMatiere().getNomMatiere()))
-                        .penalize("Cours d'informatique en parallèle", ONE_HARD);
+                LocalTime start1 = cours1.getCreneau().getHeure().getHeure();
+                LocalTime end1 = cours1.getFinHeure();
+                LocalTime start2 = cours2.getCreneau().getHeure().getHeure();
+                LocalTime end2 = cours2.getFinHeure();
+
+                return start1.isBefore(end2) && start2.isBefore(end1);
         }
-        */
 
         private Constraint disponibiliteProf(ConstraintFactory constraintFactory) {
                 return constraintFactory
                         .forEach(Cours.class)
-                        .ifNotExists(DisponibiliteProf.class,
+                        .join(DisponibiliteProf.class,
                                 Joiners.equal(Cours::getProf, DisponibiliteProf::getProf),
-                                Joiners.equal(Cours::getCreneau, DisponibiliteProf::getCreneau))
-                        .penalize("Professeur non disponible", ONE_HARD);
+                                Joiners.equal(cours -> cours.getCreneau().getJour(), dispo -> dispo.getCreneau().getJour()))
+                        .filter((cours, dispo) -> {
+                                LocalTime courseStart = cours.getCreneau().getHeure().getHeure();
+                                LocalTime courseEnd = cours.getFinHeure();
+                                LocalTime dispoHour = dispo.getCreneau().getHeure().getHeure();
+                                return dispoHour.isAfter(courseStart.minusNanos(1)) && dispoHour.isBefore(courseEnd);
+                        })
+                        .groupBy(
+                                (cours, dispo) -> cours,          
+                                ConstraintCollectors.countBi()    
+                        )
+                        .filter((cours, count) -> count < cours.getDuree())
+                        .penalize("Professeur non disponible pour toute la durée du cours", ONE_HARD);
         }
 
         private Constraint matieresDeBaseConsecutives(ConstraintFactory constraintFactory) {
@@ -113,9 +168,11 @@ public class EdtConstraintProvider implements ConstraintProvider {
                                 Joiners.equal(c -> c.getCreneau().getJour(), c -> c.getCreneau().getJour()))
 
                         .filter((c1, c2) -> {
-                                LocalTime t1 = c1.getCreneau().getHeure().getHeure();
-                                LocalTime t2 = c2.getCreneau().getHeure().getHeure();
-                                return t1.plusHours(1).equals(t2) || t2.plusHours(1).equals(t1);
+                                LocalTime start1 = c1.getCreneau().getHeure().getHeure();
+                                LocalTime end1 = c1.getFinHeure();
+                                LocalTime start2 = c2.getCreneau().getHeure().getHeure();
+                                LocalTime end2 = c2.getFinHeure();
+                                return end1.equals(start2) || end2.equals(start1);
                         })
 
                         .ifExists(MatiereBaseSpePlan.class,
@@ -128,12 +185,21 @@ public class EdtConstraintProvider implements ConstraintProvider {
 
         private Constraint depassementDeLimiteDeClasseParalleleParMatiere(ConstraintFactory constraintFactory) {
                 return constraintFactory
-                        .forEach(Cours.class)
+                        .forEach(Creneau.class) 
+                        .join(Cours.class,
+                                Joiners.equal(Creneau::getJour, cours -> cours.getCreneau().getJour())) 
+                        .filter((creneau, cours) -> {
+                                LocalTime slotStart = creneau.getHeure().getHeure();
+                                LocalTime courseStart = cours.getCreneau().getHeure().getHeure();
+                                LocalTime courseEnd = cours.getFinHeure();
+                                return !slotStart.isBefore(courseStart) && slotStart.isBefore(courseEnd);
+                        })
                         .groupBy(
-                                c -> c.getMatiere(),
-                                c -> c.getCreneau(),
-                                ConstraintCollectors.count()
-                        ).filter((matiere, creneau, count) -> 
+                                (creneau, cours) -> cours.getMatiere(), 
+                                (creneau, cours) -> creneau,             
+                                ConstraintCollectors.countBi()           
+                        )
+                        .filter((matiere, creneau, count) ->
                                 matiere.getLimiteClasseEnParallele() != null &&
                                 matiere.getLimiteClasseEnParallele() > 0 &&
                                 count > matiere.getLimiteClasseEnParallele()

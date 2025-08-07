@@ -31,6 +31,10 @@ public class EdtPlanificateur {
     private List<ClassePlan> classes;
 
     @ProblemFactCollectionProperty
+    @ValueRangeProvider(id = "dureeRange")
+    private List<Integer> durees;
+
+    @ProblemFactCollectionProperty
     private List<DisponibiliteProf> disponibiliteProfs;
 
     @ProblemFactCollectionProperty
@@ -96,6 +100,16 @@ public class EdtPlanificateur {
 
     public void setClasses(List<ClassePlan> classes) {
         this.classes = classes;
+    }
+
+    public List<Integer> getDuress() 
+    {
+        return this.durees;
+    }
+
+    public void setDurees(List<Integer> durees) 
+    {
+        this.durees = durees;
     }
 
     public List<DisponibiliteProf> getDisponibiliteProfs() {

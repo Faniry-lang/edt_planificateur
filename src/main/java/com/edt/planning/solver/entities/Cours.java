@@ -1,5 +1,7 @@
 package com.edt.planning.solver.entities;
 
+import java.time.LocalTime;
+
 import org.optaplanner.core.api.domain.entity.PlanningEntity;
 import org.optaplanner.core.api.domain.lookup.PlanningId;
 import org.optaplanner.core.api.domain.variable.PlanningVariable;
@@ -17,9 +19,13 @@ public class Cours {
     @PlanningVariable(valueRangeProviderRefs = "profRange")
     ProfPlan prof;
 
+    @PlanningVariable(valueRangeProviderRefs = "dureeRange")
+    Integer duree; 
+
     private MatierePlan matiere;
 
     private ClassePlan classe;
+
 
     public Cours(Long id, MatierePlan matiere, ClassePlan classe) {
         this.id = id;
@@ -28,6 +34,14 @@ public class Cours {
     }
 
     public Cours() {}
+
+    public Integer getDuree() {
+        return duree;
+    }
+
+    public void setDuree(Integer duree) {
+        this.duree = duree;
+    }
 
     public Long getId()
     {
@@ -77,5 +91,12 @@ public class Cours {
     public void setClasse(ClassePlan classe)
     {
         this.classe = classe;
+    }
+
+    public LocalTime getFinHeure() {
+        if (creneau == null || creneau.getHeure() == null || creneau.getHeure().getHeure() == null) {
+            return null;
+        }
+        return creneau.getHeure().getHeure().plusHours(duree);
     }
 }

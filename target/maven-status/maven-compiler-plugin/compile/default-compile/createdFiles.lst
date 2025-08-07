@@ -1,3 +1,4 @@
+com/edt/export/PdfExporter.class
 com/edt/planning/entities/MatiereProfPlan.class
 com/edt/planning/entities/VolumeHorairePlan.class
 com/edt/planning/entities/ClasseProfPlan.class

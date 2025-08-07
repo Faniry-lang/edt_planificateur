@@ -1,5 +1,6 @@
 package com.edt;
 
+import com.edt.export.PdfExporter;
 import com.edt.planning.entities.*;
 import com.edt.planning.solver.constraints.EdtConstraintProvider;
 import com.edt.planning.solver.entities.Cours;
@@ -31,9 +32,12 @@ public class App {
         EdtPlanificateur solution = solver.solve(problem);
 
         printSchedule(solution);
+        PdfExporter.export(solution, "emploi_du_temps.pdf");
+        System.out.println("PDF généré : emploi_du_temps.pdf");
+
     }
 
-    private static EdtPlanificateur createDemoData() {
+    public static EdtPlanificateur createDemoData() {
         // 1. Jours de la semaine
         JourPlan lundi = new JourPlan(1, "Lundi");
         JourPlan mardi = new JourPlan(2, "Mardi");
@@ -41,6 +45,12 @@ public class App {
         JourPlan jeudi = new JourPlan(4, "Jeudi");
         JourPlan vendredi = new JourPlan(5, "Vendredi");
         List<JourPlan> jours = Arrays.asList(lundi, mardi, mercredi, jeudi, vendredi);
+        
+        List<Integer> durees = new ArrayList<>();
+        for(int i = 1; i <= 5; i++) 
+        {
+            durees.add(i);
+        }
 
         // 2. Heures de cours
         HeurePlan h8 = new HeurePlan(1, "08:00", LocalTime.of(8, 0));
@@ -197,6 +207,7 @@ public class App {
         problem.setSpes(spes);
         problem.setMatiereProfs(profMatieres);
         problem.setClasseProfs(classeProfs);
+        problem.setDurees(durees);
         // VolumeHorairePlan n'est plus nécessaire si on crée les cours directement
         problem.setVolumeHoraires(new ArrayList<>());
 

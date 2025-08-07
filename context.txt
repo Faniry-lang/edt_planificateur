@@ -25,3 +25,12 @@ Modification à apporter à la base:
     -une table pour les matières du prof. (ok)
     -une table pour les classes tenues du prof. (ok)
     -ajouter champ heure (TIME) dans la table Heure. (ok)
+
+Probleme actuel:
+    Les Données Cours sont éparpillés dans la solution finale.
+    Proposition de solution: 
+        Ajouter une variable duree de type temps dans Cours, minimum ce sera
+        1h et maximum ce sera la valeur maximum de la duree d'une matinée ou d'une apres midi
+        on rajoutera donc des contraintes pour voir si Creneau + duree ne depasse pas l'heure de sortie, 
+        si deux cours ne se chevauchent pas, si le prof est disponible dans l'intervalle donnée par Creneau + duree,
+        une contrainte soft pour voir si on a pas de trou dans l'emploi du temps, et autre contraintes utiles du genre.
