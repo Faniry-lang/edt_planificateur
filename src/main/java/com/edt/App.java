@@ -1,5 +1,6 @@
 package com.edt;
 
+import com.edt.export.PdfExporter;
 import com.edt.planning.entities.*;
 import com.edt.planning.solver.constraints.EdtConstraintProvider;
 import com.edt.planning.solver.entities.Cours;
@@ -30,6 +31,7 @@ public class App {
         Solver<EdtPlanificateur> solver = solverFactory.buildSolver();
         EdtPlanificateur solution = solver.solve(problem);
 
+        PdfExporter.export(solution, "edt.pdf");
         printSchedule(solution);
     }
 

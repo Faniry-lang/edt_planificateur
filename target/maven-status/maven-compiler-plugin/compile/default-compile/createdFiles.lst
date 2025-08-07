@@ -4,7 +4,6 @@ com/edt/planning/entities/ClasseProfPlan.class
 com/edt/planning/entities/ClassePlan.class
 com/edt/planning/entities/MatierePlan.class
 com/edt/planning/entities/LevelPlan.class
-com/edt/App.class
 com/edt/planning/entities/JourPlan.class
 com/edt/planning/entities/SpePlan.class
 com/edt/planning/solver/entities/EdtPlanificateur.class
