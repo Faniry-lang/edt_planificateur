@@ -5,7 +5,13 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="e3e126cb-6126-40c5-b017-f62d40b824a8" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/edt.pdf" beforeDir="false" afterPath="$PROJECT_DIR$/edt.pdf" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/com/edt/App.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/edt/App.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/edt/planning/entities/ClassePlan.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/edt/planning/entities/ClassePlan.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/edt/planning/entities/MatierePlan.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/edt/planning/entities/MatierePlan.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/edt/planning/entities/SpePlan.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/edt/planning/entities/SpePlan.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/edt/planning/solver/constraints/EdtConstraintProvider.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/edt/planning/solver/constraints/EdtConstraintProvider.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -53,7 +59,7 @@
       <workItem from="1754551223987" duration="547000" />
       <workItem from="1754551810221" duration="46000" />
       <workItem from="1754551905924" duration="3372000" />
-      <workItem from="1754556404074" duration="335000" />
+      <workItem from="1754556404074" duration="15719000" />
     </task>
     <servers />
   </component>

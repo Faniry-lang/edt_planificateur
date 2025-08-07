@@ -16,6 +16,7 @@ import org.optaplanner.core.api.score.stream.Joiners;
 
 import java.time.LocalTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.optaplanner.core.api.score.buildin.hardsoft.HardSoftScore.ONE_HARD;
 import static org.optaplanner.core.api.score.buildin.hardsoft.HardSoftScore.ONE_SOFT;
@@ -24,20 +25,27 @@ public class EdtConstraintProvider implements ConstraintProvider {
 
         @Override
         public Constraint[] defineConstraints(ConstraintFactory constraintFactory) {
-                return new Constraint[]{
-                        profTientCetteClasse(constraintFactory),
-                        profEnseignantMatiere(constraintFactory),
-                        chevauchementEdtProf(constraintFactory),
-                        chevauchementEdtClasse(constraintFactory),
-                        pasDeCoursMercrediAprem(constraintFactory),
-                        disponibiliteProf(constraintFactory),
-                        matieresDeBaseConsecutives(constraintFactory),
-                        depassementDeLimiteDeClasseParalleleParMatiere(constraintFactory),
-                        // Contraintes HARD pour respecter la durée des séances
-                        pasDepasserDureeMaximaleParJour(constraintFactory),
-                        coursConsecutifsMemeMatiere(constraintFactory),
-                        // Contrainte SOFT : encourager les regroupements
-                        encouragerRegroupementSeances(constraintFactory)
+        return new Constraint[]{
+            // Contraintes HARD essentielles
+            profTientCetteClasse(constraintFactory),
+            profEnseignantMatiere(constraintFactory),
+            chevauchementEdtProf(constraintFactory),
+            chevauchementEdtClasse(constraintFactory),
+            pasDeCoursMercrediAprem(constraintFactory),
+            disponibiliteProf(constraintFactory),
+            matieresDeBaseConsecutives(constraintFactory),
+            depassementDeLimiteDeClasseParalleleParMatiere(constraintFactory),
+            
+            // Contraintes HARD pour la gestion des blocs
+            coursConsecutifsMemeMatiere(constraintFactory),
+            
+            // Contraintes SOFT pour optimiser les regroupements
+            favoriserTailleBlocPreferee(constraintFactory),
+            penaliserCoursIsoles(constraintFactory),
+            favoriserBlocContinuParfait(constraintFactory)
+
+        //     encouragerRegroupementGeneral(constraintFactory)
+    
                 };
         }
 
@@ -58,7 +66,8 @@ public class EdtConstraintProvider implements ConstraintProvider {
                         .ifNotExists(MatiereProfPlan.class,
                                 Joiners.equal(Cours::getProf, MatiereProfPlan::getProf),
                                 Joiners.equal(Cours::getMatiere, MatiereProfPlan::getMatiere)
-                        ).penalize("Prof n'enseigne pas cette matière", ONE_HARD);
+                        ).penalize("Prof n'enseigne pas cette matière",
+                                HardSoftScore.ofHard(10000)); // PÉNALITÉ MAXIMALE - INVIOLABLE
         }
 
         private Constraint chevauchementEdtProf(ConstraintFactory constraintFactory) {
@@ -96,29 +105,33 @@ public class EdtConstraintProvider implements ConstraintProvider {
         }
 
         private Constraint matieresDeBaseConsecutives(ConstraintFactory constraintFactory) {
-                return constraintFactory
-                        .forEach(Cours.class)
+    return constraintFactory
+            .forEach(Cours.class)
+            // Vérifier que le premier cours est une matière de base
+            .ifExists(MatiereBaseSpePlan.class,
+                    Joiners.equal(Cours::getMatiere, MatiereBaseSpePlan::getMatierePlan),
+                    Joiners.equal(c -> c.getClasse().getSpePlan(), MatiereBaseSpePlan::getSpePlan))
 
-                        .ifExists(MatiereBaseSpePlan.class,
-                                Joiners.equal(Cours::getMatiere, MatiereBaseSpePlan::getMatierePlan),
-                                Joiners.equal(c -> c.getClasse().getSpePlan(), MatiereBaseSpePlan::getSpePlan))
+            .join(Cours.class,
+                    Joiners.equal(Cours::getClasse),
+                    Joiners.equal(c -> c.getCreneau().getJour(), c -> c.getCreneau().getJour()))
 
-                        .join(Cours.class,
-                                Joiners.equal(Cours::getClasse),
-                                Joiners.equal(c -> c.getCreneau().getJour(), c -> c.getCreneau().getJour()))
+            .filter((c1, c2) -> {
+                LocalTime t1 = c1.getCreneau().getHeure().getHeure();
+                LocalTime t2 = c2.getCreneau().getHeure().getHeure();
+                return t1.plusHours(1).equals(t2) || t2.plusHours(1).equals(t1);
+            })
 
-                        .filter((c1, c2) -> {
-                                LocalTime t1 = c1.getCreneau().getHeure().getHeure();
-                                LocalTime t2 = c2.getCreneau().getHeure().getHeure();
-                                return t1.plusHours(1).equals(t2) || t2.plusHours(1).equals(t1);
-                        })
+            // Vérifier que le second cours est aussi une matière de base
+            .ifExists(MatiereBaseSpePlan.class,
+                    Joiners.equal((c1, c2) -> c2.getMatiere(), MatiereBaseSpePlan::getMatierePlan),
+                    Joiners.equal((c1, c2) -> c2.getClasse().getSpePlan(), MatiereBaseSpePlan::getSpePlan))
 
-                        .ifExists(MatiereBaseSpePlan.class,
-                                Joiners.equal((c1, c2) -> c2.getMatiere(), MatiereBaseSpePlan::getMatierePlan),
-                                Joiners.equal((c1, c2) -> c2.getClasse().getSpePlan(), MatiereBaseSpePlan::getSpePlan))
+            // NOUVELLE CONDITION : pénaliser seulement si les matières sont DIFFÉRENTES
+            .filter((c1, c2) -> !c1.getMatiere().equals(c2.getMatiere()))
 
-                        .penalize("Deux matières de base se suivent pour une classe", ONE_HARD);
-        }
+            .penalize("Deux matières de base différentes se suivent pour une classe", ONE_HARD);
+}
 
         private Constraint depassementDeLimiteDeClasseParalleleParMatiere(ConstraintFactory constraintFactory) {
                 return constraintFactory
@@ -136,81 +149,149 @@ public class EdtConstraintProvider implements ConstraintProvider {
         }
 
         /**
-         * Contrainte HARD : ne pas dépasser la durée maximale d'une matière par jour
-         * Si dureeSeance = 2, alors maximum 2 cours consécutifs par jour pour cette matière
-         */
-        private Constraint pasDepasserDureeMaximaleParJour(ConstraintFactory constraintFactory) {
-                return constraintFactory
-                        .forEach(Cours.class)
-                        .filter(cours -> cours.getMatiere().getDureeSeance() != null &&
-                                cours.getMatiere().getDureeSeance() > 1)
-                        .groupBy(
-                                c -> c.getClasse(),
-                                c -> c.getMatiere(),
-                                c -> c.getCreneau().getJour(),
-                                ConstraintCollectors.toList()
-                        )
-                        .filter((classe, matiere, jour, coursDuJour) ->
-                                coursDuJour.size() > matiere.getDureeSeance())
-                        .penalize("Trop de cours de cette matière dans la même journée",
-                                HardSoftScore.ofHard(100));
-        }
+ * Contrainte HARD : tous les cours d'une même matière dans une journée doivent être consécutifs
+ */
+private Constraint coursConsecutifsMemeMatiere(ConstraintFactory constraintFactory) {
+    return constraintFactory
+            .forEach(Cours.class)
+            .groupBy(
+                    c -> c.getClasse(),
+                    c -> c.getMatiere(),
+                    c -> c.getCreneau().getJour(),
+                    ConstraintCollectors.toList()
+            )
+            .filter((classe, matiere, jour, coursDuJour) -> {
+                if (coursDuJour.size() <= 1) return false; // Un seul cours, OK
 
-        /**
-         * Contrainte HARD : les cours d'une même matière dans une journée doivent être consécutifs
-         * (pas de cours éparpillés)
-         */
-        private Constraint coursConsecutifsMemeMatiere(ConstraintFactory constraintFactory) {
-                return constraintFactory
-                        .forEach(Cours.class)
-                        .filter(cours -> cours.getMatiere().getDureeSeance() != null &&
-                                cours.getMatiere().getDureeSeance() > 1)
-                        .groupBy(
-                                c -> c.getClasse(),
-                                c -> c.getMatiere(),
-                                c -> c.getCreneau().getJour(),
-                                ConstraintCollectors.toList()
-                        )
-                        .filter((classe, matiere, jour, coursDuJour) -> {
-                                if (coursDuJour.size() <= 1) return false; // Un seul cours, OK
+                // Trier les cours par heure
+                coursDuJour.sort((c1, c2) ->
+                        c1.getCreneau().getHeure().getHeure().compareTo(
+                                c2.getCreneau().getHeure().getHeure()));
 
-                                // Trier les cours par heure
-                                coursDuJour.sort((c1, c2) ->
-                                        c1.getCreneau().getHeure().getHeure().compareTo(
-                                                c2.getCreneau().getHeure().getHeure()));
+                // Vérifier que tous les cours sont consécutifs
+                for (int i = 0; i < coursDuJour.size() - 1; i++) {
+                    LocalTime h1 = coursDuJour.get(i).getCreneau().getHeure().getHeure();
+                    LocalTime h2 = coursDuJour.get(i + 1).getCreneau().getHeure().getHeure();
+                    if (!h1.plusHours(1).equals(h2)) {
+                        return true; // Cours non consécutifs = pénalité
+                    }
+                }
+                return false; // Tous consécutifs = OK
+            })
+            .penalize("Cours de même matière non consécutifs dans la journée",
+                    HardSoftScore.ofHard(1000));
+}
 
-                                // Vérifier que tous les cours sont consécutifs
-                                for (int i = 0; i < coursDuJour.size() - 1; i++) {
-                                        LocalTime h1 = coursDuJour.get(i).getCreneau().getHeure().getHeure();
-                                        LocalTime h2 = coursDuJour.get(i + 1).getCreneau().getHeure().getHeure();
-                                        if (!h1.plusHours(1).equals(h2)) {
-                                                return true; // Cours non consécutifs = pénalité
-                                        }
-                                }
-                                return false; // Tous consécutifs = OK
-                        })
-                        .penalize("Cours de même matière non consécutifs dans la journée",
-                                HardSoftScore.ofHard(50));
-        }
+/**
+ * Contrainte SOFT : favorise les blocs de la taille dureeSeance préférée
+ */
+private Constraint favoriserTailleBlocPreferee(ConstraintFactory constraintFactory) {
+    return constraintFactory
+            .forEach(Cours.class)
+            .filter(cours -> cours.getMatiere().getDureeSeance() != null &&
+                    cours.getMatiere().getDureeSeance() > 1)
+            .groupBy(
+                    c -> c.getClasse(),
+                    c -> c.getMatiere(),
+                    c -> c.getCreneau().getJour(),
+                    ConstraintCollectors.toList()
+            )
+            .filter((classe, matiere, jour, coursDuJour) -> coursDuJour.size() > 1)
+            .reward("Bonus pour respect de la durée de séance préférée", HardSoftScore.ONE_SOFT,
+                    (classe, matiere, jour, coursDuJour) -> {
+                        int dureeSeancePreferee = matiere.getDureeSeance();
+                        int totalCours = coursDuJour.size();
+                        int bonus = 0;
 
-        /**
-         * Contrainte soft pour encourager le regroupement des cours d'une même matière
-         * même quand la durée n'est pas spécifiée (dureeSeance = 1)
-         */
-        private Constraint encouragerRegroupementSeances(ConstraintFactory constraintFactory) {
-                return constraintFactory
-                        .forEach(Cours.class)
-                        .join(Cours.class,
-                                Joiners.equal(Cours::getClasse),
-                                Joiners.equal(Cours::getMatiere),
-                                Joiners.equal(c -> c.getCreneau().getJour())
-                        )
-                        .filter((c1, c2) -> {
-                                if (c1.equals(c2)) return false;
-                                LocalTime h1 = c1.getCreneau().getHeure().getHeure();
-                                LocalTime h2 = c2.getCreneau().getHeure().getHeure();
-                                return h1.plusHours(1).equals(h2) || h2.plusHours(1).equals(h1);
-                        })
-                        .reward("Cours consécutifs de même matière (bonus)", ONE_SOFT);
-        }
+                        int blocsParfaits = totalCours / dureeSeancePreferee;
+                        int coursRestants = totalCours % dureeSeancePreferee;
+
+                        bonus += blocsParfaits * dureeSeancePreferee * 100;
+
+                        if (coursRestants > 1) {
+                            bonus += coursRestants * 50;
+                        } else if (coursRestants == 1) {
+                            bonus += 10;
+                        }
+
+                        return bonus;
+                    });
+}
+
+
+/**
+ * Contrainte SOFT : pénalise les cours isolés (encourage les regroupements)
+ */
+private Constraint penaliserCoursIsoles(ConstraintFactory constraintFactory) {
+    return constraintFactory
+            .forEach(Cours.class)
+            .groupBy(
+                    c -> c.getClasse(),
+                    c -> c.getMatiere(),
+                    c -> c.getCreneau().getJour(),
+                    ConstraintCollectors.count()
+            )
+            .filter((classe, matiere, jour, count) -> count == 1)
+            .penalize("Cours isolé (non regroupé)", HardSoftScore.ofSoft(20));
+}
+
+/**
+ * Contrainte SOFT : bonus supplémentaire pour regroupement même sans dureeSeance spécifiée
+ */
+private Constraint encouragerRegroupementGeneral(ConstraintFactory constraintFactory) {
+    return constraintFactory
+            .forEach(Cours.class)
+            .join(Cours.class,
+                    Joiners.equal(Cours::getClasse),
+                    Joiners.equal(Cours::getMatiere),
+                    Joiners.equal(c -> c.getCreneau().getJour()))
+            .filter((c1, c2) -> {
+                if (c1.equals(c2)) return false;
+                LocalTime h1 = c1.getCreneau().getHeure().getHeure();
+                LocalTime h2 = c2.getCreneau().getHeure().getHeure();
+                return h1.plusHours(1).equals(h2) || h2.plusHours(1).equals(h1);
+            })
+            .reward("Cours consécutifs de même matière", HardSoftScore.ofSoft(30));
+}
+
+private Constraint favoriserBlocContinuParfait(ConstraintFactory constraintFactory) {
+    return constraintFactory
+            .forEach(Cours.class)
+            .filter(c -> c.getCreneau() != null) // on évite les cours non placés
+            .groupBy(
+                    c -> c.getClasse(),
+                    c -> c.getMatiere(),
+                    c -> c.getCreneau().getJour(),
+                    ConstraintCollectors.toList()
+            )
+            .reward("Bloc parfait respecté", HardSoftScore.ofHard(5000),
+                    (classe, matiere, jour, coursList) -> {
+                        Integer dureePref = matiere.getDureeSeance();
+                        if (dureePref == null || dureePref < 2) return 0;
+
+                        // Trier les cours du jour par heure
+                        List<Integer> heures = coursList.stream()
+                                .map(c -> c.getCreneau().getHeure().getId()) // suppose que tu as un index pour chaque heure
+                                .sorted()
+                                .collect(Collectors.toList());
+
+                        int maxBloc = 1;
+                        int currentBloc = 1;
+
+                        for (int i = 1; i < heures.size(); i++) {
+                            if (heures.get(i) == heures.get(i - 1) + 1) {
+                                currentBloc++;
+                                maxBloc = Math.max(maxBloc, currentBloc);
+                            } else {
+                                currentBloc = 1;
+                            }
+                        }
+
+                        // Si un bloc consécutif a exactement la bonne taille
+                        return (maxBloc == dureePref) ? 1 : 0;
+                    });
+}
+
+
+
 }

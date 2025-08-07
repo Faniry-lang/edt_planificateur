@@ -24,7 +24,7 @@ public class App {
                 .withSolutionClass(EdtPlanificateur.class)
                 .withEntityClasses(Cours.class)
                 .withConstraintProviderClass(EdtConstraintProvider.class)
-                .withTerminationConfig(new TerminationConfig().withSecondsSpentLimit(30L))
+                .withTerminationConfig(new TerminationConfig().withSecondsSpentLimit(60L))
         );
 
         EdtPlanificateur problem = createDemoData();
@@ -82,7 +82,7 @@ public class App {
 
         // 6. Matières
         // Matières avec durées spécifiées
-        MatierePlan maths = new MatierePlan(1, "Maths", 0, 2);  // 2h consécutives
+        MatierePlan maths = new MatierePlan(1, "Maths", 0, 3);  // 2h consécutives
         MatierePlan physique = new MatierePlan(2, "Physique", 0, 2); // 2h consécutives
         MatierePlan francais = new MatierePlan(3, "Français", 0, 2); // 2h consécutives
         MatierePlan histoire = new MatierePlan(4, "Histoire", 0, 1); // 1h
@@ -115,84 +115,94 @@ public class App {
             new MatiereProfPlan(eps, profD)
         );
 
-        // 10. Association Profs -> Classes (Optionnel, si un prof est titulaire)
-        // Pour cet exemple, on ne le remplit pas, laissant le solveur décider.
+
+        // 10. Association Profs -> Classes (laisser vide pour laisser le solveur décider)
         List<ClasseProfPlan> classeProfs = new ArrayList<>();
 
-        // 11. Disponibilités des Profs
+        // 11. Disponibilités des Profs - BEAUCOUP PLUS RÉALISTES
         List<DisponibiliteProf> disponibiliteProfs = new ArrayList<>();
 
-        // Prof A est dispo seulement le lundi
-//        for (HeurePlan h : heures) {
-//            disponibiliteProfs.add(new DisponibiliteProf(new Creneau(lundi, h), profA));
-//        }
-//
-//        // Prof B est dispo seulement le lundi
-//        for (HeurePlan h : heures) {
-//            disponibiliteProfs.add(new DisponibiliteProf(new Creneau(lundi, h), profB));
-//        }
-
-        // Prof A est dispo tout le temps sauf le mercredi
-        for (Creneau c : creneaux) {
-            if (!c.getJour().equals(mercredi)) {
-                disponibiliteProfs.add(new DisponibiliteProf(c, profA));
+        // Prof A (Maths/Physique) - disponible tous les jours sauf mercredi après-midi
+        for (JourPlan jour : jours) {
+            for (HeurePlan heure : heures) {
+                // Pas de cours mercredi après-midi
+                if (jour.equals(mercredi) && heure.getHeure().getHour() >= 13) {
+                    continue;
+                }
+                disponibiliteProfs.add(new DisponibiliteProf(new Creneau(jour, heure), profA));
             }
         }
-        // Prof B est dispo Lundi/Mardi matin et Jeudi/Vendredi aprem
-        for (HeurePlan h : Arrays.asList(h8, h9, h10, h11)) {
-            disponibiliteProfs.add(new DisponibiliteProf(new Creneau(lundi, h), profB));
-            disponibiliteProfs.add(new DisponibiliteProf(new Creneau(mardi, h), profB));
-        }
-        for (HeurePlan h : Arrays.asList(h13, h14, h15, h16)) {
-            disponibiliteProfs.add(new DisponibiliteProf(new Creneau(jeudi, h), profB));
-            disponibiliteProfs.add(new DisponibiliteProf(new Creneau(vendredi, h), profB));
-        }
-        // Prof C (Info) n'est dispo que le matin
-         for (JourPlan j : jours) {
-            for (HeurePlan h : Arrays.asList(h8, h9, h10, h11)) {
-                 disponibiliteProfs.add(new DisponibiliteProf(new Creneau(j, h), profC));
+
+        // Prof B (Français/Histoire) - disponible tous les jours sauf mercredi après-midi
+        for (JourPlan jour : jours) {
+            for (HeurePlan heure : heures) {
+                // Pas de cours mercredi après-midi
+                if (jour.equals(mercredi) && heure.getHeure().getHour() >= 13) {
+                    continue;
+                }
+                disponibiliteProfs.add(new DisponibiliteProf(new Creneau(jour, heure), profB));
             }
         }
-        // Prof D (EPS) est toujours dispo
-        for (Creneau c : creneaux) {
-            disponibiliteProfs.add(new DisponibiliteProf(c, profD));
+
+        // Prof C (Informatique) - disponible le matin principalement + quelques créneaux aprem
+        for (JourPlan jour : jours) {
+            // Matins (toujours dispo)
+            for (HeurePlan heure : Arrays.asList(h8, h9, h10, h11)) {
+                disponibiliteProfs.add(new DisponibiliteProf(new Creneau(jour, heure), profC));
+            }
+            // Quelques créneaux après-midi (pas mercredi)
+            if (!jour.equals(mercredi)) {
+                for (HeurePlan heure : Arrays.asList(h14, h15)) {
+                    disponibiliteProfs.add(new DisponibiliteProf(new Creneau(jour, heure), profC));
+                }
+            }
+        }
+
+        // Prof D (EPS) - disponible partout sauf mercredi après-midi
+        for (JourPlan jour : jours) {
+            for (HeurePlan heure : heures) {
+                // Pas de cours mercredi après-midi
+                if (jour.equals(mercredi) && heure.getHeure().getHour() >= 13) {
+                    continue;
+                }
+                disponibiliteProfs.add(new DisponibiliteProf(new Creneau(jour, heure), profD));
+            }
         }
 
 
-        // 12. Volume Horaire par matière/classe (simplifié)
-        // On va créer les cours directement, ce qui représente le volume horaire.
+// 12. Volume Horaire - COURS INDIVIDUELS (regroupement automatique)
         List<Cours> coursList = new ArrayList<>();
         long coursIdCounter = 0;
 
-        // Seconde A (Scientifique)
+        // Seconde A (Scientifique) - Créer chaque cours individuellement
+        // 4h de maths par semaine = 4 cours d'1h (le système les regroupera en 2 blocs de 2h)
         for (int i = 0; i < 4; i++) coursList.add(new Cours(coursIdCounter++, maths, secondeA));
-        for (int i = 0; i < 3; i++) coursList.add(new Cours(coursIdCounter++, physique, secondeA));
-        for (int i = 0; i < 2; i++) coursList.add(new Cours(coursIdCounter++, francais, secondeA));
-        for (int i = 0; i < 2; i++) coursList.add(new Cours(coursIdCounter++, histoire, secondeA));
-        for (int i = 0; i < 1; i++) coursList.add(new Cours(coursIdCounter++, info, secondeA));
-        for (int i = 0; i < 2; i++) coursList.add(new Cours(coursIdCounter++, eps, secondeA));
+        for (int i = 0; i < 4; i++) coursList.add(new Cours(coursIdCounter++, physique, secondeA));
+        for (int i = 0; i < 4; i++) coursList.add(new Cours(coursIdCounter++, francais, secondeA));
+        for (int i = 0; i < 2; i++) coursList.add(new Cours(coursIdCounter++, histoire, secondeA)); // dureeSeance=1
+        for (int i = 0; i < 1; i++) coursList.add(new Cours(coursIdCounter++, info, secondeA));     // dureeSeance=1
+        for (int i = 0; i < 2; i++) coursList.add(new Cours(coursIdCounter++, eps, secondeA));      // dureeSeance=1
 
         // Seconde B (Scientifique)
         for (int i = 0; i < 4; i++) coursList.add(new Cours(coursIdCounter++, maths, secondeB));
-        for (int i = 0; i < 3; i++) coursList.add(new Cours(coursIdCounter++, physique, secondeB));
-        for (int i = 0; i < 2; i++) coursList.add(new Cours(coursIdCounter++, francais, secondeB));
+        for (int i = 0; i < 4; i++) coursList.add(new Cours(coursIdCounter++, physique, secondeB));
+        for (int i = 0; i < 4; i++) coursList.add(new Cours(coursIdCounter++, francais, secondeB));
         for (int i = 0; i < 2; i++) coursList.add(new Cours(coursIdCounter++, histoire, secondeB));
         for (int i = 0; i < 1; i++) coursList.add(new Cours(coursIdCounter++, info, secondeB));
         for (int i = 0; i < 2; i++) coursList.add(new Cours(coursIdCounter++, eps, secondeB));
 
         // Premiere L (Littéraire)
-        for (int i = 0; i < 2; i++) coursList.add(new Cours(coursIdCounter++, maths, premiereL));
-        for (int i = 0; i < 4; i++) coursList.add(new Cours(coursIdCounter++, francais, premiereL));
-        for (int i = 0; i < 4; i++) coursList.add(new Cours(coursIdCounter++, histoire, premiereL));
+        for (int i = 0; i < 2; i++) coursList.add(new Cours(coursIdCounter++, maths, premiereL)); // dureeSeance=2
+        for (int i = 0; i < 4; i++) coursList.add(new Cours(coursIdCounter++, francais, premiereL)); // dureeSeance=2
+        for (int i = 0; i < 4; i++) coursList.add(new Cours(coursIdCounter++, histoire, premiereL)); // dureeSeance=1
         for (int i = 0; i < 2; i++) coursList.add(new Cours(coursIdCounter++, eps, premiereL));
 
         // Terminale S (Scientifique)
-        for (int i = 0; i < 5; i++) coursList.add(new Cours(coursIdCounter++, maths, terminaleS));
+        for (int i = 0; i < 4; i++) coursList.add(new Cours(coursIdCounter++, maths, terminaleS));
         for (int i = 0; i < 4; i++) coursList.add(new Cours(coursIdCounter++, physique, terminaleS));
-        for (int i = 0; i < 2; i++) coursList.add(new Cours(coursIdCounter++, francais, terminaleS));
+        for (int i = 0; i < 2; i++) coursList.add(new Cours(coursIdCounter++, francais, terminaleS)); // dureeSeance=2
         for (int i = 0; i < 1; i++) coursList.add(new Cours(coursIdCounter++, info, terminaleS));
         for (int i = 0; i < 2; i++) coursList.add(new Cours(coursIdCounter++, eps, terminaleS));
-
 
         // 13. Assemblage de la solution
         EdtPlanificateur problem = new EdtPlanificateur();
@@ -202,20 +212,19 @@ public class App {
         problem.setClasses(classes);
         problem.setProfs(profs);
         problem.setMatieres(matieres);
-        problem.setMatiereBaseSpePlans(matieresDeBase);
+        problem.setMatiereBaseSpePlans(matieresDeBase); // IMPORTANT: Cette ligne doit être présente
         problem.setCoursList(coursList);
         problem.setDisponibiliteProfs(disponibiliteProfs);
         problem.setLevels(levels);
         problem.setSpes(spes);
         problem.setMatiereProfs(profMatieres);
         problem.setClasseProfs(classeProfs);
-        // VolumeHorairePlan n'est plus nécessaire si on crée les cours directement
         problem.setVolumeHoraires(new ArrayList<>());
 
         return problem;
     }
 
-   private static void printSchedule(EdtPlanificateur solution) {
+    private static void printSchedule(EdtPlanificateur solution) {
         System.out.println("========================= EMPLOI DU TEMPS FINAL ========================");
         List<ClassePlan> classes = solution.getClasses();
         List<Cours> coursList = solution.getCoursList();
@@ -226,27 +235,41 @@ public class App {
                 .collect(Collectors.groupingBy(Cours::getClasse));
 
         for (ClassePlan classe : classes) {
-            System.out.printf("--- Emploi du temps pour la classe: %s (%s - %s) ---",
+            System.out.printf("\n--- Emploi du temps pour la classe: %s (%s - %s) ---\n",
                     classe.getNumeroClasse(), classe.getLevelPlan().getNomLevel(), classe.getSpePlan().getNomSpe());
 
             List<Cours> coursDeLaClasse = coursParClasse.getOrDefault(classe, new ArrayList<>());
 
             for (JourPlan jour : solution.getJours()) {
-                System.out.println("  * " + jour.getNomJour() + ":");
-                coursDeLaClasse.stream()
+                List<Cours> coursJour = coursDeLaClasse.stream()
                         .filter(c -> c.getCreneau().getJour().equals(jour))
                         .sorted((c1, c2) -> c1.getCreneau().getHeure().getHeure().compareTo(c2.getCreneau().getHeure().getHeure()))
-                        .forEach(c -> {
-                            System.out.printf("    - %s: %s avec %s",
-                                    c.getCreneau().getHeure().getNomHeure(),
-                                    c.getMatiere().getNomMatiere(),
-                                    c.getProf().getNomProf());
-                        });
+                        .collect(Collectors.toList());
+
+                if (!coursJour.isEmpty()) {
+                    System.out.println("  * " + jour.getNomJour() + ":");
+                    coursJour.forEach(c -> {
+                        System.out.printf("    - %s: %s avec %s\n",
+                                c.getCreneau().getHeure().getNomHeure(),
+                                c.getMatiere().getNomMatiere(),
+                                c.getProf().getNomProf());
+                    });
+                }
             }
         }
 
-        System.out.println("========================= SCORE ========================");
+        System.out.println("\n========================= SCORE ========================");
         System.out.println("Score final: " + solution.getScore());
+
+        // Compter les cours non assignés
+        long coursNonAssignes = coursList.stream()
+                .filter(c -> c.getCreneau() == null || c.getProf() == null)
+                .count();
+
+        if (coursNonAssignes > 0) {
+            System.out.println("Cours non assignés: " + coursNonAssignes);
+        }
+
         System.out.println("========================================================");
     }
 }

@@ -5,58 +5,90 @@ public class MatierePlan {
     String nomMatiere;
     Integer limiteClasseEnParallele;
     Integer dureeSeance;
+    Integer seuilRegroupement; // Nouveau : seuil en heures pour forcer le regroupement
 
     public MatierePlan(Integer id, String nomMatiere) {
         this.id = id;
         this.nomMatiere = nomMatiere;
         this.limiteClasseEnParallele = 0;
-        this.dureeSeance=1;
+        this.dureeSeance = 1;
+        this.seuilRegroupement = 2; // Par défaut 2h
     }
 
     public MatierePlan(Integer id, String nomMatiere, Integer limiteClasseEnParallele) {
         this.id = id;
         this.nomMatiere = nomMatiere;
         this.limiteClasseEnParallele = limiteClasseEnParallele;
+        this.dureeSeance = 1;
+        this.seuilRegroupement = 2; // Par défaut 2h
     }
 
-    public MatierePlan(Integer id, String nomMatiere, Integer limiteClasseEnParallele , Integer dureeSeance) {
+    public MatierePlan(Integer id, String nomMatiere, Integer limiteClasseEnParallele, Integer dureeSeance) {
         this.id = id;
         this.nomMatiere = nomMatiere;
         this.limiteClasseEnParallele = limiteClasseEnParallele;
         this.dureeSeance = dureeSeance;
+        this.seuilRegroupement = 2; // Par défaut 2h
     }
-    public Integer getId()
-    {
+    
+    public MatierePlan(Integer id, String nomMatiere, Integer limiteClasseEnParallele, Integer dureeSeance, Integer seuilRegroupement) {
+        this.id = id;
+        this.nomMatiere = nomMatiere;
+        this.limiteClasseEnParallele = limiteClasseEnParallele;
+        this.dureeSeance = dureeSeance;
+        this.seuilRegroupement = seuilRegroupement;
+    }
+
+    public Integer getId() {
         return this.id;
     }
 
-    public void setId(Integer id)
-    {
+    public void setId(Integer id) {
         this.id = id;
     }
 
-    public String getNomMatiere() 
-    {
+    public String getNomMatiere() {
         return this.nomMatiere;
     }
 
-    public void setNomMatiere(String nomMatiere) 
-    {
+    public void setNomMatiere(String nomMatiere) {
         this.nomMatiere = nomMatiere;
     }
 
-    public Integer getLimiteClasseEnParallele()
-    {
+    public Integer getLimiteClasseEnParallele() {
         return this.limiteClasseEnParallele;
     }
 
-    public Integer getDureeSeance()
-    {
+    public Integer getDureeSeance() {
         return this.dureeSeance;
     }
+    
+    public Integer getSeuilRegroupement() {
+        return this.seuilRegroupement;
+    }
 
-    public void setLimiteClasseEnParallele(Integer limiteClasseEnParallele)
-    {
+    public void setLimiteClasseEnParallele(Integer limiteClasseEnParallele) {
         this.limiteClasseEnParallele = limiteClasseEnParallele;
+    }
+    
+    public void setDureeSeance(Integer dureeSeance) {
+        this.dureeSeance = dureeSeance;
+    }
+    
+    public void setSeuilRegroupement(Integer seuilRegroupement) {
+        this.seuilRegroupement = seuilRegroupement;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        MatierePlan that = (MatierePlan) o;
+        return id != null && id.equals(that.id);
+    }
+    
+    @Override
+    public int hashCode() {
+        return id != null ? id.hashCode() : 0;
     }
 }
