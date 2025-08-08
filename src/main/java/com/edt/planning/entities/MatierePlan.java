@@ -5,14 +5,12 @@ public class MatierePlan {
     String nomMatiere;
     Integer limiteClasseEnParallele;
     Integer dureeSeance;
-    Integer seuilRegroupement; // Nouveau : seuil en heures pour forcer le regroupement
 
     public MatierePlan(Integer id, String nomMatiere) {
         this.id = id;
         this.nomMatiere = nomMatiere;
         this.limiteClasseEnParallele = 0;
         this.dureeSeance = 1;
-        this.seuilRegroupement = 2; // Par défaut 2h
     }
 
     public MatierePlan(Integer id, String nomMatiere, Integer limiteClasseEnParallele) {
@@ -20,7 +18,6 @@ public class MatierePlan {
         this.nomMatiere = nomMatiere;
         this.limiteClasseEnParallele = limiteClasseEnParallele;
         this.dureeSeance = 1;
-        this.seuilRegroupement = 2; // Par défaut 2h
     }
 
     public MatierePlan(Integer id, String nomMatiere, Integer limiteClasseEnParallele, Integer dureeSeance) {
@@ -28,16 +25,9 @@ public class MatierePlan {
         this.nomMatiere = nomMatiere;
         this.limiteClasseEnParallele = limiteClasseEnParallele;
         this.dureeSeance = dureeSeance;
-        this.seuilRegroupement = 2; // Par défaut 2h
+
     }
-    
-    public MatierePlan(Integer id, String nomMatiere, Integer limiteClasseEnParallele, Integer dureeSeance, Integer seuilRegroupement) {
-        this.id = id;
-        this.nomMatiere = nomMatiere;
-        this.limiteClasseEnParallele = limiteClasseEnParallele;
-        this.dureeSeance = dureeSeance;
-        this.seuilRegroupement = seuilRegroupement;
-    }
+
 
     public Integer getId() {
         return this.id;
@@ -62,10 +52,7 @@ public class MatierePlan {
     public Integer getDureeSeance() {
         return this.dureeSeance;
     }
-    
-    public Integer getSeuilRegroupement() {
-        return this.seuilRegroupement;
-    }
+
 
     public void setLimiteClasseEnParallele(Integer limiteClasseEnParallele) {
         this.limiteClasseEnParallele = limiteClasseEnParallele;
@@ -75,9 +62,6 @@ public class MatierePlan {
         this.dureeSeance = dureeSeance;
     }
     
-    public void setSeuilRegroupement(Integer seuilRegroupement) {
-        this.seuilRegroupement = seuilRegroupement;
-    }
 
     @Override
     public boolean equals(Object o) {

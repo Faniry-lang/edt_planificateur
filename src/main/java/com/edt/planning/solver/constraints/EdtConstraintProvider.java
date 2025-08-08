@@ -41,7 +41,7 @@ public class EdtConstraintProvider implements ConstraintProvider {
             
             // Contraintes SOFT pour optimiser les regroupements
             favoriserTailleBlocPreferee(constraintFactory),
-            penaliserCoursIsoles(constraintFactory),
+            penaliserCoursIsoles(constraintFactory),//lasa inverse no ataon'ito 
             favoriserBlocContinuParfait(constraintFactory)
 
         //     encouragerRegroupementGeneral(constraintFactory)
@@ -132,7 +132,6 @@ public class EdtConstraintProvider implements ConstraintProvider {
 
             .penalize("Deux matières de base différentes se suivent pour une classe", ONE_HARD);
 }
-
         private Constraint depassementDeLimiteDeClasseParalleleParMatiere(ConstraintFactory constraintFactory) {
                 return constraintFactory
                         .forEach(Cours.class)
@@ -147,7 +146,6 @@ public class EdtConstraintProvider implements ConstraintProvider {
                         )
                         .penalize("Trop de classes en parallèles pour cette matière à ce créneau", ONE_HARD);
         }
-
         /**
  * Contrainte HARD : tous les cours d'une même matière dans une journée doivent être consécutifs
  */
@@ -231,7 +229,8 @@ private Constraint penaliserCoursIsoles(ConstraintFactory constraintFactory) {
                     c -> c.getCreneau().getJour(),
                     ConstraintCollectors.count()
             )
-            .filter((classe, matiere, jour, count) -> count == 1)
+//            .filter((classe, matiere, jour, count) -> count == 1)
+            .filter((classe, matiere, jour, count) -> count > 1) // l'inverse de "isolé"
             .penalize("Cours isolé (non regroupé)", HardSoftScore.ofSoft(20));
 }
 
